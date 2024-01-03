@@ -1,0 +1,2542 @@
+---
+swagger: "2.0"
+info:
+  description: |
+    Issues service API.
+    Environments base path:
+      PRODUCTION: https://developer.api.autodesk.com/construction/issues/v1
+  version: 1.3.1
+  title: Issues Service API (ACC)
+host: developer.api.autodesk.com
+basePath: /construction/issues/v1
+schemes:
+- https
+consumes:
+- application/json
+produces:
+- application/json
+paths:
+  /projects/{projectId}/users/me:
+    get:
+      tags:
+      - Projects
+      description: Returns the current user permissions. This operation is available to everyone.
+      operationId: getUserPermissions
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      security:
+      - "3-legged":
+        - data:read
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/UsersMeDefinition'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+  /projects/{projectId}/issue-types:
+    get:
+      tags:
+      - Issue Types
+      description: "Retrieves a project's issue types. This operation is available to everyone. Note: by default this endpoint will not return deleted items."
+      operationId: getIssueTypes
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: include
+        in: query
+        description: Add 'include=subtypes' to add the subtypes for each type.
+        required: false
+        type: string
+      - name: limit
+        in: query
+        description: Add 'limit=20' to limit the results count (together with the offset to support pagination).
+        required: false
+        type: integer
+      - name: offset
+        in: query
+        description: Add 'offset=20' to get partial results (together with the limit to support pagination).
+        required: false
+        type: integer
+      - name: filter
+        in: query
+        description: "Used to filter result. e.g. 'filter=[isActive=true]' will only return active types."
+        required: false
+        type: string
+      - name: "filter[updatedAt]"
+        in: query
+        description: Used to filter types by update date.
+        required: false
+        type: string
+      security:
+      - "3-legged":
+        - data:read
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/inline_response_200'
+        "400":
+          description: invalid input
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+  /projects/{projectId}/issue-attribute-definitions:
+    get:
+      tags:
+      - Issue Attribute Definitions
+      description: "Retrieves information about issue custom attributes for a project. This includes the custom attribute title, description and type."
+      operationId: getIssueAttributeDefinitions
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: limit
+        in: query
+        description: "The number of custom attribute definitions to return in the response payload.  For example, ``limit=2``. Acceptable values: ``1-200``. Default value: ``200``."
+        required: false
+        type: integer
+        default: 200
+        maximum: 200
+        minimum: 1
+      - name: offset
+        in: query
+        description: The number of custom attribute definitions you want to begin retrieving results from.
+        required: false
+        type: integer
+        minimum: 0
+      - name: "filter[createdAt]"
+        in: query
+        description: "Retrieves items that were created at the specified date and time, in the following format: YYYY-MM-DDThh:mm:ss.sz, or a date and time range in the following format: YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz. For more details, see `JSON API Filtering <http://jsonapi.org/format/#fetching-filtering>`_."
+        required: false
+        type: string
+        format: date-time
+        x-example: 2017-09-13T10:25:03.000Z...
+      - name: "filter[updatedAt]"
+        in: query
+        description: "Retrieves items that were last updated at the specified date and time, in the following format: YYYY-MM-DDThh:mm:ss.sz, or a date and time range in the following format: YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz. For more details, see `JSON API Filtering <http://jsonapi.org/format/#fetching-filtering>`_."
+        required: false
+        type: string
+        format: date-time
+        x-example: 2017-09-13T10:25:03.000Z
+      - name: "filter[deletedAt]"
+        in: query
+        description: |
+          Retrieves items that were deleted in the specified date and time range, in the following format: YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz.
+
+          To include non-deleted items in the response, add ``null`` to the filter:  ``filter[deletedAt]=null,YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz``.
+
+          For more details, see `JSON API Filtering <http://jsonapi.org/format/#fetching-filtering>`_.
+        required: false
+        type: string
+        format: date-time
+        x-example: '...2017-09-13T10:25:03.000Z'
+      - name: "filter[dataType]"
+        in: query
+        description: "Retrieves issue custom attribute definitions with the specified data type. Possible values: ``list``, ``text``, ``paragraph``, ``numeric``. For example, ``filter[dataType]=text,numeric``."
+        required: false
+        type: string
+        x-example: text
+        enum:
+        - list
+        - text
+        - paragraph
+        - numeric
+      security:
+      - "3-legged":
+        - data:read
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/inline_response_200_1'
+        "400":
+          description: invalid input
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+  /projects/{projectId}/issue-attribute-mappings:
+    get:
+      tags:
+      - Issue Attribute Mappings
+      description: |
+        Retrieves information about issue custom attribute mappings for a project, including the type of items mapped to the custom attribute.
+
+        Note that by default, this endpoint only retrieves custom attributes that were directly mapped to the type or sub-type.
+
+        Note that if you want to include deleted custom attribute mappings in the response, you need to use the ``deletedAt`` filter.
+      operationId: getIssueAttributeMappings
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: limit
+        in: query
+        description: "The number of custom attribute mappings to return in the response payload.  For example, ``limit=2``. Acceptable values: ``1-200``. Default value: ``200``."
+        required: false
+        type: integer
+        maximum: 200
+        minimum: 1
+      - name: offset
+        in: query
+        description: The number of custom attribute mappings you want to begin retrieving results from.
+        required: false
+        type: integer
+        minimum: 0
+      - name: "filter[createdAt]"
+        in: query
+        description: "Retrieves items that were created at the specified date and time, in the following format: YYYY-MM-DDThh:mm:ss.sz, or a date and time range in the following format: YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz. For more details, see `JSON API Filtering <http://jsonapi.org/format/#fetching-filtering>`_."
+        required: false
+        type: string
+        format: date-time
+        x-example: 2017-09-13T10:25:03.000Z...
+      - name: "filter[updatedAt]"
+        in: query
+        description: "Retrieves items that were last updated at the specified date and time, in the following format: YYYY-MM-DDThh:mm:ss.sz, or a date and time range in the following format: YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz. For more details, see `JSON API Filtering <http://jsonapi.org/format/#fetching-filtering>`_."
+        required: false
+        type: string
+        format: date-time
+        x-example: 2017-09-13T10:25:03.000Z
+      - name: "filter[deletedAt]"
+        in: query
+        description: |
+          Retrieves items that were deleted in the specified date and time range, in the following format: YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz.
+
+          To include non-deleted items in the response, add ``null`` to the filter:  ``filter[deletedAt]=null,YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz``.
+
+          For more details, see `JSON API Filtering <http://jsonapi.org/format/#fetching-filtering>`_.
+        required: false
+        type: string
+        format: date-time
+        x-example: '...2017-09-13T10:25:03.000Z'
+      - name: "filter[attributeDefinitionId]"
+        in: query
+        description: "Retrieves issue custom attribute mappings associated with the specified issue custom attribute definitions. Separate multiple values with commas. For example: ``filter[attributeDefinitionId]=18ee5858-cbf1-451a-a525-7c6ff8156775``."
+        required: false
+        type: string
+        x-example: 18ee5858-cbf1-451a-a525-7c6ff8156775
+      - name: "filter[mappedItemId]"
+        in: query
+        description: "Retrieves issue custom attribute mappings associated with the specified items (project, type, or subtype). Separate multiple values with commas. For example: ``filter[mappedItemId]=18ee5858-cbf1-451a-a525-7c6ff8156775``."
+        required: false
+        type: string
+        x-example: 18ee5858-cbf1-451a-a525-7c6ff81567aa
+      - name: "filter[isRequired]"
+        in: query
+        description: "Retrieves issue custom attribute mappings associated with custom attributes that are either required or not required. Possible values: ``true``, ``false``. For example: ``filter[isRequired]=true``."
+        required: false
+        type: string
+        x-example: "true"
+      security:
+      - "3-legged":
+        - data:read
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/inline_response_200_2'
+        "400":
+          description: invalid input
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+  /projects/{projectId}/issue-root-cause-categories:
+    get:
+      tags:
+      - Issue Root Cause Categories
+      description: "Get all the 'issue root cause categories'. This operation is available to everyone. Note: by default this endpoint will not return deleted items."
+      operationId: getIssueRootCauseCategories
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: include
+        in: query
+        description: Add 'include=rootcauses' to add the root causes for each category.
+        required: false
+        type: string
+      - name: limit
+        in: query
+        description: Add 'limit=20' to limit the results count (together with the offset to support pagination).
+        required: false
+        type: integer
+      - name: offset
+        in: query
+        description: Add 'offset=20' to get partial results (together with the limit to support pagination).
+        required: false
+        type: integer
+      - name: filter
+        in: query
+        description: "use filter result. e.g. 'filter=[isActive=true]' will only return active categories"
+        required: false
+        type: string
+      - name: "filter[updatedAt]"
+        in: query
+        description: used to support swagger client query param filtering
+        required: false
+        type: string
+      security:
+      - "3-legged":
+        - data:read
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/inline_response_200_3'
+        "400":
+          description: invalid input
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+  /projects/{projectId}/issues:
+    get:
+      tags:
+      - Issues
+      description: Returns information about all the issues in a specific project.
+      operationId: getIssues
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: "filter[id]"
+        in: query
+        description: Filter issues by the unique issue ID. Separate multiple values with commas
+        required: false
+        type: string
+        x-example: "a5f49f04-59bb-477c-97e6-6833cb50bdac,a5f49f04-59bb-477c-97e6-6833cb50b123"
+      - name: "filter[issueTypeId]"
+        in: query
+        description: Filter issues by the unique identifier of the type of the issue. Separate multiple values with commas
+        required: false
+        type: string
+        x-example: "a5f49f04-59bb-477c-97e6-6833cb50bdac,a5f49f04-59bb-477c-97e6-6833cb50b123"
+      - name: "filter[issueSubtypeId]"
+        in: query
+        description: Filter issues by the unique identifier of the subtype of the issue. Separate multiple values with commas
+        required: false
+        type: string
+        x-example: "a5f49f04-59bb-477c-97e6-6833cb50bdac,a5f49f04-59bb-477c-97e6-6833cb50b123"
+      - name: "filter[status]"
+        in: query
+        description: Filter issues by the unique identifier of the current status of the issue. Separate multiple values with commas
+        required: false
+        type: string
+        x-example: "a5f49f04-59bb-477c-97e6-6833cb50bdac,a5f49f04-59bb-477c-97e6-6833cb50b123"
+      - name: "filter[linkedDocumentUrn]"
+        in: query
+        description: "Filter issues by linked file/document URN's. Separate multiple values with commas. To filter by maximum version, add \"@[version-number]\" after the urn. For example, to retrieve the issues of 2 file/document URN's, use filter[linkedDocumentUrn]=urn%3Aadsk.wipstg%3Adm.lineage%3A7RBfH69GTuuhXnzG5e4oew%2Curn%3Aadsk.wipstg%3Adm.lineage%3A-Rv5HsqqRwiGCM72YhmnOA@1"
+        required: false
+        type: array
+        items:
+          type: string
+        collectionFormat: multi
+      - name: "filter[dueDate]"
+        in: query
+        description: "Filter issues by due date. For example, use filter[dueDate]=2018-05-09T00:00:00Z...2018-05-10T00:00:00Z (Date range), or filter[dueDate]=2018-05-09T00:00:00Z... (Greater-than or equal to), or filter[dueDate]=...2018-05-09T00:00:00Z (Less-than or equal to)"
+        required: false
+        type: string
+        format: date
+      - name: "filter[startDate]"
+        in: query
+        description: "Filter issues by start date. For example, use filter[startDate]=2018-05-09T00:00:00Z...2018-05-10T00:00:00Z (Date range), or filter[startDate]=2018-05-09T00:00:00Z... (Greater-than or equal to), or filter[startDate]=...2018-05-09T00:00:00Z (Less-than or equal to)"
+        required: false
+        type: string
+        format: date
+      - name: "filter[published]"
+        in: query
+        description: Filter issues by published status (true/false)
+        required: false
+        type: boolean
+        x-ignore: true
+      - name: "filter[deleted]"
+        in: query
+        description: Show deleted issues (only admin). Default is false.
+        required: false
+        type: boolean
+        x-ignore: true
+      - name: "filter[createdAt]"
+        in: query
+        description: "Filter issues created at specified date and time. For example, use filter[createdAt]=2018-05-11T00:00:00%2B02:00...2018-05-12T00:00:00%2B02:00"
+        required: false
+        type: string
+        format: date-time
+      - name: "filter[createdBy]"
+        in: query
+        description: Filter issues by the unique identifier of the user who created the issue. Separate multiple values with commas
+        required: false
+        type: array
+        items:
+          type: string
+        collectionFormat: multi
+      - name: "filter[openedAt]"
+        in: query
+        description: "Filter issues opened at specified date and time. For example, use filter[openedAt]=2018-05-11T00:00:00%2B02:00...2018-05-12T00:00:00%2B02:00"
+        required: false
+        type: string
+        format: date-time
+      - name: "filter[openedBy]"
+        in: query
+        description: Filter issues by the unique identifier of the user who opened the issue. Separate multiple values with commas
+        required: false
+        type: array
+        items:
+          type: string
+        collectionFormat: multi
+      - name: "filter[updatedAt]"
+        in: query
+        description: "Filter issues updated at specified date and time. For example, use filter[updatedAt]=2018-05-11T00:00:00%2B02:00...2018-05-12T00:00:00%2B02:00"
+        required: false
+        type: string
+        format: date-time
+      - name: "filter[updatedBy]"
+        in: query
+        description: Filter issues by the unique identifier of the user who updated the issue. Separate multiple values with commas
+        required: false
+        type: array
+        items:
+          type: string
+        collectionFormat: multi
+      - name: "filter[assignedTo]"
+        in: query
+        description: Filter issues by the unique identifier of the current assignee of this issue. Separate multiple values with commas
+        required: false
+        type: array
+        items:
+          type: string
+        collectionFormat: multi
+      - name: "filter[rootCauseId]"
+        in: query
+        description: Filter issues by the unique identifier of the type of root cause for the issue. Separate multiple values with commas
+        required: false
+        type: array
+        items:
+          type: string
+          format: uuid
+        collectionFormat: multi
+      - name: "filter[locationId]"
+        in: query
+        description: Filter issues by the unique LBS (Location Breakdown Structure) identifier that relates to the issue. Separate multiple values with commas
+        required: false
+        type: array
+        items:
+          type: string
+          format: uuid
+        collectionFormat: multi
+      - name: "filter[subLocationId]"
+        in: query
+        description: Filter issues by the unique LBS (Location Breakdown Structure) identifier that relates to the issue and retreives also all issues with sub locations. Separate multiple values with commas
+        required: false
+        type: array
+        items:
+          type: string
+          format: uuid
+        collectionFormat: multi
+      - name: "filter[closedBy]"
+        in: query
+        description: Filter issues by the unique identifier of the user who closed the issue. Separate multiple values with commas
+        required: false
+        type: array
+        items:
+          type: string
+        collectionFormat: multi
+      - name: "filter[closedAt]"
+        in: query
+        description: "Filter issues closed at specified date and time. For example, use filter[closedAt]=2018-05-11T00:00:00%2B02:00...2018-05-12T00:00:00%2B02:00"
+        required: false
+        type: string
+        format: date-time
+      - name: "filter[title]"
+        in: query
+        description: "Filter issues by title. For example, use filter[title]=my title"
+        required: false
+        type: string
+      - name: "filter[displayId]"
+        in: query
+        description: Filter issues by the chronological user-friendly identifier. Separate multiple values with commas
+        required: false
+        type: integer
+        minimum: 1
+      - name: "filter[assignedToType]"
+        in: query
+        description: Filter issues by the type of the current assignee of this issue. Separate multiple values with commas
+        required: false
+        type: string
+        minimum: 1
+      - name: "filter[customAttributes]"
+        in: query
+        description: "Filter issues by the custom attributes. Each custom attribute filter should be defined by it's uuid. For example, filter[customAttributes][f227d940-ae9b-4722-9297-389f4411f010]=1,2,3. Separate multiple values with commas."
+        required: false
+        type: array
+        items:
+          type: string
+        collectionFormat: multi
+        minimum: 1
+      - name: "filter[valid]"
+        in: query
+        description: Only return valid issues (=no empty type/subtype)
+        required: false
+        type: boolean
+      - name: "filter[viewableGuid]"
+        in: query
+        description: |
+          Filter issues that are related to one of the prahses in the filter.
+          Each prahas will be compossed from [file URN]/[sheet Guid] or [file URN]@[version]/[sheet Guid]
+          were as the version is given onlt issues that was created in the specific or privies version will be retuned
+          If the file URN is `URN1` and the guid is `123` the filter will be filter[viewableGuid]='URN1/123'.
+          more then one filter will look like - filter[viewableGuid]='URN1/123,URN2/456'
+        required: false
+        type: array
+        items:
+          type: string
+        collectionFormat: multi
+        minimum: 1
+        x-ignore: true
+      - name: limit
+        in: query
+        description: Return specified number of issues. Acceptable values are 1-100. Default value is 100
+        required: false
+        type: integer
+        default: 100
+        maximum: 100
+        minimum: 1
+      - name: offset
+        in: query
+        description: Return issues starting from the specified offset number. Default value is 0
+        required: false
+        type: integer
+        default: 0
+        minimum: 0
+      - name: sort
+        in: query
+        description: "Sort issues by specified fields. Separate multiple values with commas. To sort in descending order add a - before the sort criteria. For example, sortBy=status,-displayId,-dueDate,customAttributes[5c07cbe2-256a-48f1-b35b-2e5e00914104]"
+        required: false
+        type: array
+        items:
+          type: string
+          enum:
+          - displayId
+          - title
+          - description
+          - status
+          - assignedTo
+          - assignedToType
+          - dueDate
+          - locationDetails
+          - published
+          - closedBy
+          - closedAt
+          - createdBy
+          - createdAt
+          - updatedAt
+          - issueSubType
+          - issueType
+          - customAttributes
+          - startDate
+          - rootCause
+        collectionFormat: multi
+      - name: fields
+        in: query
+        description: "Return only specific fields in issue object. Separate multiple values with commas. Fields which will be returned in any case: id, title, status, issueTypeId"
+        required: false
+        type: array
+        items:
+          type: string
+          enum:
+          - id
+          - projectId
+          - displayId
+          - title
+          - description
+          - snapshotUrn
+          - issueTypeId
+          - issueSubtypeId
+          - status
+          - assignedTo
+          - assignedToType
+          - dueDate
+          - startDate
+          - locationId
+          - locationDetails
+          - linkedDocuments
+          - links
+          - rootCauseTitle
+          - rootCauseId
+          - permittedStatuses
+          - permittedAttributes
+          - permittedActions
+          - published
+          - commentCount
+          - attachmentCount
+          - openedBy
+          - openedAt
+          - closedBy
+          - closedAt
+          - createdBy
+          - createdAt
+          - updatedBy
+          - updatedAt
+          - customAttributes
+        collectionFormat: multi
+      security:
+      - "3-legged":
+        - data:read
+      responses:
+        "200":
+          description: Returns all issues in combination with pagination details
+          schema:
+            $ref: '#/definitions/IssuesDefinition'
+        "400":
+          description: The request could not be understood by the server due to malformed syntax or missing request headers. The client SHOULD NOT repeat the request without modifications. The response body may give an indication of what is wrong with the request
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "403":
+          description: The request was successfully validated but permission is not granted
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "404":
+          description: The specified resource was not found
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+    post:
+      tags:
+      - Issues
+      description: Creates a new issue.
+      operationId: createIssue
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - in: body
+        name: createIssue
+        description: The payload for creating a new issue.
+        required: false
+        schema:
+          $ref: '#/definitions/CreateIssueDefinition'
+      security:
+      - "3-legged":
+        - data:read
+        - data:write
+      responses:
+        "201":
+          description: Returns a single issue
+          schema:
+            $ref: '#/definitions/GetIssueDefinition'
+        "400":
+          description: The request could not be understood by the server due to malformed syntax or missing request headers. The client SHOULD NOT repeat the request without modifications. The response body may give an indication of what is wrong with the request
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "403":
+          description: The request was successfully validated but permission is not granted
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "409":
+          description: The request contained a data conflict
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+  /projects/{projectId}/issues/{issueId}:
+    get:
+      tags:
+      - Issues
+      description: Returns information about a single issue in a specific project.
+      operationId: getIssue
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: issueId
+        in: path
+        description: The unique identifier of the issue.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      security:
+      - "3-legged":
+        - data:read
+      responses:
+        "200":
+          description: Returns a single issue
+          schema:
+            $ref: '#/definitions/GetIssueDefinition'
+        "400":
+          description: The request could not be understood by the server due to malformed syntax or missing request headers. The client SHOULD NOT repeat the request without modifications. The response body may give an indication of what is wrong with the request
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "403":
+          description: The request was successfully validated but permission is not granted
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "404":
+          description: The specified resource was not found
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+    patch:
+      tags:
+      - Issues
+      description: Updates an existing issue.
+      operationId: updateIssue
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: issueId
+        in: path
+        description: The unique identifier of the issue.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - in: body
+        name: updateIssue
+        description: The payload for updating an existing issue.
+        required: false
+        schema:
+          $ref: '#/definitions/UpdateIssueDefinition'
+      security:
+      - "3-legged":
+        - data:read
+        - data:write
+      responses:
+        "200":
+          description: Returns a single issue
+          schema:
+            $ref: '#/definitions/GetIssueDefinition'
+        "400":
+          description: The request could not be understood by the server due to malformed syntax or missing request headers. The client SHOULD NOT repeat the request without modifications. The response body may give an indication of what is wrong with the request
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "403":
+          description: The request was successfully validated but permission is not granted
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "404":
+          description: The specified resource was not found
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+  /projects/{projectId}/issues/{issueId}/comments:
+    get:
+      tags:
+      - Issue comments
+      description: Get all the comments for a specific issue.
+      operationId: getIssueComments
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: issueId
+        in: path
+        description: The unique identifier of the issue.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: filter
+        in: query
+        description: "Use filter result. e.g. 'filter[issueId]=1234-12345-123456-1234' will only return comments of specific issue."
+        required: false
+        type: string
+      - name: sortBy
+        in: query
+        description: "Sort issue comments by specified fields. Separate multiple values with commas. To sort in descending order add a - before the sort criteria. For example, sortBy=createdAt,-updatedAt."
+        required: false
+        type: array
+        items:
+          type: string
+          enum:
+          - createdBy
+          - createdAt
+          - updatedAt
+        collectionFormat: multi
+        default: createdAt
+      - name: limit
+        in: query
+        description: Add 'limit=20' to limit the results count (together with the offset to support pagination).
+        required: false
+        type: integer
+      - name: offset
+        in: query
+        description: Add 'offset=20' to get partial results (together with the limit to support pagination).
+        required: false
+        type: integer
+      security:
+      - "3-legged":
+        - data:read
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/inline_response_200_4'
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project not found
+        "500":
+          description: Internal server error
+    post:
+      tags:
+      - Issue comments
+      description: Creates a new comment under a specific issue.
+      operationId: createIssueComment
+      parameters:
+      - name: projectId
+        in: path
+        description: The project ID. The project contains different components such as the issues.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - name: issueId
+        in: path
+        description: The unique identifier of the issue.
+        required: true
+        type: string
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      - in: body
+        name: body
+        description: The body content.
+        required: true
+        schema:
+          $ref: '#/definitions/CommentDefinition'
+      security:
+      - "3-legged":
+        - data:read
+        - data:write
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ExistingCommentDefinition'
+        "400":
+          description: invalid input
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "409":
+          description: The request contained a data conflict
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponseDefinition'
+securityDefinitions:
+  "3-legged":
+    type: oauth2
+    authorizationUrl: https://developer.api.autodesk.com/authentication/v1/authorize
+    tokenUrl: https://developer.api.autodesk.com/authentication/v1/gettoken
+    flow: accessCode
+    scopes:
+      data:read: Allows to read data
+      data:write: Allows to modify data
+definitions:
+  PaginationMetaDefinition:
+    type: object
+    properties:
+      limit:
+        type: integer
+        example: 10
+        description: The number of custom attributes per page.
+      offset:
+        type: integer
+        example: 100
+        description: The number of custom attributes results begin from.
+      totalResults:
+        type: integer
+        example: 25
+        description: The total number of custom attributes in the response.
+    description: The pagination object.
+  ErrorResponseDefinition:
+    type: object
+    required:
+    - detail
+    - title
+    properties:
+      type:
+        type: string
+        description: The identifier of the error used to denote additional error codes
+      title:
+        type: string
+        description: The title of the error
+      detail:
+        type: string
+        description: A detailed description of the error
+      errors:
+        type: array
+        description: A list of additional validation errors
+        items:
+          type: object
+          additionalProperties: false
+    description: The response in case of an error
+    additionalProperties: false
+  UsersMeDefinition:
+    type: object
+    properties:
+      id:
+        type: string
+        example: BXQXL7646C2R
+        description: Your Autodesk ID.
+        readOnly: true
+      isProjectAdmin:
+        type: boolean
+        example: true
+        description: States whether the current logged in user is a system admin.
+      canManageTemplates:
+        type: boolean
+        description: Not applicable.
+      issues:
+        $ref: '#/definitions/UsersMeDefinition_issues'
+      permissionLevels:
+        type: array
+        items:
+          $ref: '#/definitions/PermissionLevelsDefinition'
+  PermissionLevelsDefinition:
+    type: string
+    example: read
+    enum:
+    - read
+    - write
+    - create
+  IssueTypeDefinition:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1111
+        readOnly: true
+      containerId:
+        type: string
+        format: uuid
+        description: The project ID. The project contains different components such as the issues.
+        x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+        x-format: uuid
+      title:
+        type: string
+        example: Coordination
+        minLength: 1
+        maxLength: 250
+      isActive:
+        type: boolean
+        example: true
+        default: true
+      orderIndex:
+        type: integer
+        example: 2
+        readOnly: true
+      permittedActions:
+        type: array
+        example:
+        - edit
+        - delete
+        description: permitted actions on this specific item.
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueTypesPermittedActionDefinition'
+      permittedAttributes:
+        type: array
+        example:
+        - edit
+        - delete
+        description: "if the permittedActions property include the 'edit', then this will be the list of attributes that are allowed to be updated."
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueTypesPermittedAttributeDefinition'
+      subtypes:
+        type: array
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueSubtypeDefinition'
+      statusSet:
+        type: string
+        example: gg
+        description: "Note: the status set is bound to change in the near future."
+      createAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      updatedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      deletedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      createdBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+      updatedBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+      deletedBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+  IssueTypesPermittedActionDefinition:
+    type: string
+    example: edit
+    enum:
+    - edit
+    - delete
+    - change_order
+  IssueTypesPermittedAttributeDefinition:
+    type: string
+    example: title
+    enum:
+    - title
+    - isActive
+  IssueTypesPermittedStatusesDefinition:
+    type: string
+    example: title
+    enum:
+    - open
+    - pending
+    - in_review
+    - closed
+  IssueSubtypeDefinition:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1111
+        readOnly: true
+      issueTypeId:
+        type: string
+        format: uuid
+        example: 2220f222-6c54-4b01-90e6-d701748f0222
+        readOnly: true
+      title:
+        type: string
+        example: Clash
+        minLength: 1
+        maxLength: 250
+      code:
+        type: string
+        example: exo
+        description: 3 chars pin label
+        minLength: 1
+        maxLength: 3
+      isActive:
+        type: boolean
+        example: true
+        default: true
+      orderIndex:
+        type: integer
+        example: 5
+        readOnly: true
+      isReadOnly:
+        type: boolean
+        example: false
+        readOnly: true
+        default: false
+      permittedActions:
+        type: array
+        example:
+        - edit
+        - delete
+        description: permitted actions on this specific item.
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueSubtypesPermittedActionDefinition'
+      permittedAttributes:
+        type: array
+        example:
+        - edit
+        - delete
+        description: "if the permittedActions property include the 'edit', then this will be the list of attributes that are allowed to be updated."
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueSubtypesPermittedAttributeDefinition'
+      createAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      updatedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      deletedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      createdBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+      updatedBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+      deletedBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+  IssueSubtypesPermittedActionDefinition:
+    type: string
+    enum:
+    - edit
+    - delete
+    - change_order
+  IssueSubtypesPermittedAttributeDefinition:
+    type: string
+    example: title
+    enum:
+    - title
+    - isActive
+  IssueAttributeDefinitionListOptionDefinition:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1111
+        description: The id of the list option.
+      value:
+        type: string
+        example: high
+        description: The value of the list item.
+  IssueAttributeDefinitionDefinition:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1111
+        description: The ID of the custom attribute.
+        readOnly: true
+      projectId:
+        type: string
+        format: uuid
+        example: 2220f222-6c54-4b01-90e6-d701748f0222
+        description: The ID of the project.
+        readOnly: true
+      title:
+        type: string
+        example: Velocity
+        description: The title of the custom attribute.
+        minLength: 1
+        maxLength: 100
+      description:
+        type: string
+        example: How long will it take for this issue to be resolved.
+        description: The description of the custom attribute.
+        minLength: 0
+        maxLength: 500
+      dataType:
+        type: string
+        example: list
+        description: "The type of custom attribute. Possible values: ``list``, ``text``, ``paragraph``, ``numeric``."
+        enum:
+        - list
+        - text
+        - paragraph
+        - numeric
+      metadata:
+        $ref: '#/definitions/IssueAttributeDefinitionDefinition_metadata'
+      isRequiredDefault:
+        type: boolean
+        example: false
+        description: |
+          ``true`` if the custom attribute is mapped by default
+          ``false`` if the custom attribute is not mapped by default
+          Note that all custom attributes are not mapped by default in the current release.
+        default: false
+      permittedActions:
+        type: array
+        example:
+        - edit
+        - delete
+        description: A list of actions that are permitted for the custom attribute for the current user.
+        readOnly: true
+        items:
+          $ref: '#/definitions/AttributeDefinitionPermittedActionDefinition'
+      permittedAttributes:
+        type: array
+        example:
+        - title
+        - description
+        description: A list of custom attribute attributes that can be modified by the current user.
+        readOnly: true
+        items:
+          $ref: '#/definitions/AttributeDefinitionPermittedAttributeDefinition'
+      createdAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        description: "The date and time the custom attribute was created, in the following format: YYYY-MM-DDThh:mm:ss.sz."
+        readOnly: true
+      createdBy:
+        type: string
+        example: A3RGM375QTZ7
+        description: The ACC ID of the user who created the custom attribute.
+        readOnly: true
+      updatedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        description: "The last date and time the custom attribute was updated, in the following format: YYYY-MM-DDThh:mm:ss.sz."
+        readOnly: true
+      updatedBy:
+        type: string
+        example: A3RGM375QTZ7
+        description: The ACC ID of the user who last updated the custom attribute.
+        readOnly: true
+      deletedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        description: "The date and time the custom attribute was deleted, in the following format: YYYY-MM-DDThh:mm:ss.sz."
+        readOnly: true
+      deletedBy:
+        type: string
+        example: A3RGM375QTZ7
+        description: The ACC ID of the user who deleted the custom attribute.
+        readOnly: true
+    description: The results object.
+  AttributeDefinitionPermittedActionDefinition:
+    type: string
+    example: edit
+    enum:
+    - edit
+    - delete
+  AttributeDefinitionPermittedAttributeDefinition:
+    type: string
+    example: title
+    enum:
+    - title
+    - description
+    - isRequiredDefault
+    - metadata
+  IssueAttributeMappingDefinition:
+    type: object
+    required:
+    - attributeDefinitionId
+    - mappedItemId
+    - mappedItemType
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1111
+        description: The ID of the custom attribute mapping.
+        readOnly: true
+      attributeDefinitionId:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1333
+        description: The ID of the custom attribute definition.
+      mappedItemType:
+        type: string
+        example: issueType
+        description: "The type of item the custom attribute is mapped to. Possible values: ``project`` (all types and subtypes inherit the mapping), ``issueType`` (subtypes inherit the mapping), ``issueSubtype``."
+        enum:
+        - project
+        - issueType
+        - issueSubtype
+      mappedItemId:
+        type: string
+        format: uuid
+        example: 2220f222-6c54-4b01-90e6-d701748f0222
+        description: "The ID of the item (project, type, or subtype) the custom attribute is mapped to."
+      order:
+        type: integer
+        example: 2
+        description: "The order that the custom attributes were mapped to the item (project, type, subtype). This is only relevant to non-inherited mappings."
+        readOnly: true
+      isRequired:
+        type: boolean
+        example: false
+        description: |
+          ``true`` if the custom attribute is required
+          ``false`` if the custom attribute is not required
+        default: false
+      permittedActions:
+        type: array
+        example:
+        - delete
+        - update
+        - change_order
+        description: A list of actions that are permitted for the custom attribute mapping for the current user.
+        readOnly: true
+        items:
+          $ref: '#/definitions/AttributesMappingPermittedActionDefinition'
+      permittedAttributes:
+        type: array
+        example:
+        - isRequired
+        description: A list of custom attribute mapping attributes that can be modified by the current user.
+        readOnly: true
+        items:
+          $ref: '#/definitions/AttributesMappingPermittedAttributeDefinition'
+      createdAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        description: "The date and time the custom attribute mapping was created, in the following format: YYYY-MM-DDThh:mm:ss.sz."
+        readOnly: true
+      createdBy:
+        type: string
+        example: A3RGM375QTZ7
+        description: The ACC ID of the user who created the custom attribute mapping.
+        readOnly: true
+      updatedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        description: "The last date and time the custom attribute was updated, in the following format: YYYY-MM-DDThh:mm:ss.sz."
+        readOnly: true
+      updatedBy:
+        type: string
+        example: A3RGM375QTZ7
+        description: The ACC ID of the user who last updated the custom attribute mapping.
+        readOnly: true
+      deletedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        description: "The date and time the custom attribute mapping was deleted, in the following format: YYYY-MM-DDThh:mm:ss.sz."
+        readOnly: true
+      deletedBy:
+        type: string
+        example: A3RGM375QTZ7
+        description: The ACC ID of the user who deleted the custom attribute.
+        readOnly: true
+  AttributesMappingPermittedActionDefinition:
+    type: string
+    example: delete
+    enum:
+    - delete
+    - update
+    - change_order
+  AttributesMappingPermittedAttributeDefinition:
+    type: string
+    example: isRequired
+    enum:
+    - isRequired
+  IssueRootCausesDefinition:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1111
+        readOnly: true
+      rootCauseCategoryId:
+        type: string
+        format: uuid
+        example: 2220f222-6c54-4b01-90e6-d701748f0222
+        readOnly: true
+      title:
+        type: string
+        example: Sub-Priority
+        minLength: 1
+        maxLength: 100
+      isActive:
+        type: boolean
+        example: false
+        default: true
+      permittedActions:
+        type: array
+        example:
+        - edit
+        - delete
+        description: permitted actions on this specific item.
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueRootCausePermittedActionDefinition'
+      permittedAttributes:
+        type: array
+        example:
+        - title
+        - isActive
+        description: "if the permittedActions property include the 'edit', then this will be the list of attributes that are allowed to be updated."
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueRootCausePermittedAttributeDefinition'
+      createAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      updatedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      deletedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      createdBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+      updatedBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+      deletedBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+  IssueRootCausePermittedActionDefinition:
+    type: string
+    example: edit
+    enum:
+    - edit
+    - delete
+  IssueRootCausePermittedAttributeDefinition:
+    type: string
+    example: title
+    enum:
+    - title
+    - isActive
+  IssueRootCauseCategoryDefinition:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1111
+        readOnly: true
+      title:
+        type: string
+        example: Priority
+        minLength: 1
+        maxLength: 100
+      isActive:
+        type: boolean
+        example: false
+        default: true
+      permittedActions:
+        type: array
+        example:
+        - edit
+        - delete
+        description: permitted actions on this specific item.
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueRootCauseCategoryPermittedActionDefinition'
+      permittedAttributes:
+        type: array
+        example:
+        - title
+        - isActive
+        description: "if the permittedActions property include the 'edit', then this will be the list of attributes that are allowed to be updated."
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueRootCauseCategoryPermittedAttributeDefinition'
+      rootCauses:
+        type: array
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueRootCausesDefinition'
+      createAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      updatedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      deletedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        readOnly: true
+      createdBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+      updatedBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+      deletedBy:
+        type: string
+        example: A3RGM375QTZ7
+        readOnly: true
+  IssueRootCauseCategoryPermittedActionDefinition:
+    type: string
+    example: edit
+    enum:
+    - edit
+    - delete
+  IssueRootCauseCategoryPermittedAttributeDefinition:
+    type: string
+    example: title
+    enum:
+    - title
+    - isActive
+  IssuesDefinition:
+    type: object
+    required:
+    - pagination
+    - results
+    properties:
+      pagination:
+        type: object
+        description: "The pagination object defining the limit, offset, total number of issues, next and previous URL"
+        additionalProperties: false
+      results:
+        type: array
+        description: The list of issues in the current page
+        items:
+          $ref: '#/definitions/GetIssueDefinition'
+    additionalProperties: false
+  IssueDefinition:
+    type: object
+    properties:
+      projectId:
+        type: string
+        format: uuid
+        description: The unique identifier of the project this issue is part of.
+        readOnly: true
+      deleted:
+        type: boolean
+        example: false
+        description: States whether this issue was deleted.
+        x-nullable: true
+      displayId:
+        type: integer
+        description: The chronological user-friendly identifier of the issue.
+        readOnly: true
+        x-nullable: false
+      title:
+        type: string
+        example: Door missing a screw
+        description: The name of the issue.
+        maxLength: 4200
+        x-nullable: false
+      description:
+        type: string
+        example: "The door is missing a screw, please fix this"
+        description: The description and purpose of the issue.
+        maxLength: 10000
+        x-nullable: true
+      snapshotUrn:
+        type: string
+        description: "Not applicable. To download a snapshot, see the following `OSS Signed URL Download </en/docs/data/v2/reference/http/buckets-:bucketKey-objects-:objectName-signeds3download-GET/>`_ reference."
+        x-nullable: true
+      issueTypeId:
+        type: string
+        format: uuid
+        description: The unique identifier of the type of the issue.
+        readOnly: true
+        x-nullable: false
+      issueSubtypeId:
+        type: string
+        format: uuid
+        description: "The unique identifier of the subtype of the issue, should be provided alongside with ``issueTypeId``."
+        x-nullable: false
+      status:
+        type: string
+        description: The current status of the issue.
+        enum:
+        - open
+        - pending
+        - in_review
+        - closed
+        x-nullable: true
+      assignedTo:
+        type: string
+        description: The unique identifier of the current assignee of this issue.
+        x-nullable: true
+      assignedToType:
+        type: string
+        description: The type of the current assignee of this issue.
+        enum:
+        - user
+        - company
+        - role
+        x-nullable: true
+      dueDate:
+        type: string
+        format: date
+        example: 2018-07-25
+        description: "The due date of the issue, in ISO8601 format."
+        x-nullable: true
+      startDate:
+        type: string
+        format: date
+        example: 1982-06-01
+        description: "The start date of the issue, in ISO8601 format."
+        x-nullable: true
+      locationId:
+        type: string
+        format: uuid
+        description: The unique LBS (Location Breakdown Structure) identifier that relates to the issue.
+        x-nullable: true
+      locationDetails:
+        type: string
+        example: issue location details
+        description: The location as plain text that relates to the issue.
+        maxLength: 8300
+        x-nullable: true
+      linkedDocuments:
+        type: array
+        description: Not applicable.
+        items:
+          type: object
+          additionalProperties: false
+        maxItems: 1
+      links:
+        type: array
+        description: Not applicable.
+      ownerId:
+        type: string
+        description: Not applicable.
+      rootCauseId:
+        type: string
+        format: uuid
+        description: The unique identifier of the type of root cause for the issue.
+        x-nullable: true
+      officialResponse:
+        type: object
+        description: Not applicable.
+        properties: {}
+      issueTemplateId:
+        type: string
+        format: uuid
+        description: Not applicable.
+        x-nullable: true
+      permittedStatuses:
+        type: array
+        description: "A list of statuses accessible to the current user, this is based on the actual status of the issue."
+        readOnly: true
+        items:
+          type: string
+      permittedAttributes:
+        type: array
+        description: A list of attributes the current user can manipulate in the current context (Status etc.).
+        readOnly: true
+        items:
+          type: string
+      published:
+        type: boolean
+        example: true
+        description: States whether this issue is publish.
+        default: false
+        x-nullable: true
+      permittedActions:
+        type: array
+        description: "The actions that are permitted for the issue in the current state. For example: ``add comments``."
+        readOnly: true
+        items:
+          type: string
+      commentCount:
+        type: integer
+        description: The number of comments in this issue.
+        readOnly: true
+      attachmentCount:
+        type: integer
+        description: Not applicable.
+      openedBy:
+        type: string
+        description: The unique identifier of the user who opened the issue.
+        readOnly: true
+        x-nullable: true
+      openedAt:
+        type: string
+        format: date-time
+        description: "The date and time the issue was opened, in ISO8601 format."
+        readOnly: true
+        x-nullable: true
+      closedBy:
+        type: string
+        description: The unique identifier of the user who closed the issue.
+        readOnly: true
+        x-nullable: true
+      closedAt:
+        type: string
+        format: date-time
+        description: "The date and time the issue was closed, in ISO8601 format."
+        readOnly: true
+        x-nullable: true
+      createdBy:
+        type: string
+        description: The unique identifier of the user who created the issue.
+        readOnly: true
+        x-nullable: true
+      createdAt:
+        type: string
+        format: date-time
+        description: "The date and time the issue was created, in ISO8601 format."
+        readOnly: true
+        x-nullable: true
+      updatedBy:
+        type: string
+        description: The unique identifier of the user who updated the issue.
+        readOnly: true
+        x-nullable: true
+      updatedAt:
+        type: string
+        format: date-time
+        description: "The date and time the issue was updated, in ISO8601 format."
+        readOnly: true
+        x-nullable: true
+      watchers:
+        type: array
+        description: An ``Autodesk ID`` based list of watchers for the issue.
+        items:
+          type: string
+      customAttributes:
+        type: array
+        items:
+          $ref: '#/definitions/customAttributeDefinition'
+    additionalProperties: false
+  ExistingIssueDefinition:
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: The unique identifier of the issue.
+    allOf:
+    - $ref: '#/definitions/IssueDefinition'
+    - {}
+  GetIssueDefinition:
+    allOf:
+    - $ref: '#/definitions/ExistingIssueDefinition'
+    - {}
+  CreateIssueDefinition:
+    properties:
+      status:
+        x-nullable: false
+      officialResponse:
+        readOnly: true
+      linkedDocuments: {}
+    required:
+    - status
+    allOf:
+    - $ref: '#/definitions/IssueDefinition'
+    - {}
+  UpdateIssueDefinition:
+    properties:
+      linkedDocuments:
+        description: Not applicable.
+      issueTypeId:
+        readOnly: true
+    allOf:
+    - $ref: '#/definitions/IssueDefinition'
+    - {}
+  CommentDefinition:
+    type: object
+    properties:
+      body:
+        type: string
+        example: "Hey Aharon, please validate that this is even possible before starting to work on the issue."
+        description: The comment content.
+      createdAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        description: "The date and time the comment was created, in the following format: YYYY-MM-DDThh:mm:ss.sz."
+        readOnly: true
+      syncedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        description: "The date and time the comment was synced, in the following format: YYYY-MM-DDThh:mm:ss.sz."
+        readOnly: true
+      updatedAt:
+        type: string
+        format: date-time
+        example: 2019-02-04 18:05:38.330468
+        description: "The date and time the comment was updated, in the following format: YYYY-MM-DDThh:mm:ss.sz."
+        readOnly: true
+      createdBy:
+        type: string
+        description: Autodesk ID of the comment creator.
+  ExistingCommentDefinition:
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1111
+      issueId:
+        type: string
+        format: uuid
+        example: 1110f111-6c54-4b01-90e6-d701748f1111
+    allOf:
+    - $ref: '#/definitions/CommentDefinition'
+    - {}
+  customAttributeDefinition:
+    type: object
+    required:
+    - attributeDefinitionId
+    - value
+    properties:
+      attributeDefinitionId:
+        type: string
+        format: uuid
+        example: 2220f222-6c54-4b01-90e6-d701748f0888
+      value:
+        example: fast
+        description: "custom attributes value. in case of a list option, the id of the selected option, otherwize can be string/text/date/boolean"
+      type:
+        type: string
+        example: numeric
+        description: "Type of the attribute: value should of the corresponding format"
+        readOnly: true
+        enum:
+        - numeric
+        - date
+        - checkbox
+        - paragraph
+        - list
+        - text
+      title:
+        example: Secondary Title
+        description: Free text description of the attribute
+        readOnly: true
+  inline_response_200:
+    type: object
+    properties:
+      pagination:
+        $ref: '#/definitions/PaginationMetaDefinition'
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/IssueTypeDefinition'
+  inline_response_200_1:
+    type: object
+    properties:
+      pagination:
+        $ref: '#/definitions/PaginationMetaDefinition'
+      results:
+        type: array
+        description: The results object.
+        items:
+          $ref: '#/definitions/IssueAttributeDefinitionDefinition'
+  inline_response_200_2:
+    type: object
+    properties:
+      pagination:
+        $ref: '#/definitions/PaginationMetaDefinition'
+      results:
+        type: array
+        description: The results object.
+        items:
+          $ref: '#/definitions/IssueAttributeMappingDefinition'
+  inline_response_200_3:
+    type: object
+    properties:
+      pagination:
+        $ref: '#/definitions/PaginationMetaDefinition'
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/IssueRootCauseCategoryDefinition'
+  inline_response_200_4:
+    type: object
+    properties:
+      pagination:
+        $ref: '#/definitions/PaginationMetaDefinition'
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/ExistingCommentDefinition'
+  UsersMeDefinition_issues_new:
+    type: object
+    properties:
+      permitted_actions:
+        type: array
+        example:
+        - edit
+        - delete
+        description: The actions you are allowed to do on issues.
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueTypesPermittedActionDefinition'
+      permitted_attributes:
+        type: array
+        example:
+        - edit
+        - delete
+        description: For which attributes you are allowed to open a new issue.
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueTypesPermittedAttributeDefinition'
+      permitted_statuses:
+        type: array
+        example:
+        - open
+        - pending
+        description: For which statuses you are allowed to open a new issue.
+        readOnly: true
+        items:
+          $ref: '#/definitions/IssueTypesPermittedStatusesDefinition'
+    description: If this property is attached - you are allowed to create a new issue.
+  UsersMeDefinition_issues:
+    type: object
+    properties:
+      new:
+        $ref: '#/definitions/UsersMeDefinition_issues_new'
+  IssueAttributeDefinitionDefinition_metadata_list:
+    type: object
+    properties:
+      options:
+        type: array
+        example:
+        - id: 802b87e0-60f6-4b1b-9cdf-37b53c731f17
+          value: option a
+        - id: 999b77e0-60f6-4b1b-9cdf-37b53c431f22
+          value: option b
+        description: The options object.
+        items:
+          $ref: '#/definitions/IssueAttributeDefinitionListOptionDefinition'
+    description: The list object.
+  IssueAttributeDefinitionDefinition_metadata:
+    type: object
+    properties:
+      list:
+        $ref: '#/definitions/IssueAttributeDefinitionDefinition_metadata_list'
+    description: The metadata object; only relevant for ``list`` custom attributes.
+parameters:
+  projectId:
+    name: projectId
+    in: path
+    description: The project ID. The project contains different components such as the issues.
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  containerId:
+    name: containerId
+    in: path
+    description: The project ID. The project contains different components such as the issues.
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  issueTypeId:
+    name: issueTypeId
+    in: path
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  issueSubtypeId:
+    name: issueSubtypeId
+    in: path
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  issueAttributeDefinitionId:
+    name: issueAttributeDefinitionId
+    in: path
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  issueAttributeMappingId:
+    name: issueAttributeMappingId
+    in: path
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  issueRootCauseCategoryId:
+    name: issueRootCauseCategoryId
+    in: path
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  issueRootCauseId:
+    name: issueRootCauseId
+    in: path
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  rootCauseCategoryMappingId:
+    name: rootCauseCategoryMappingId
+    in: path
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  issueTemplateCategoryId:
+    name: issueTemplateCategoryId
+    in: path
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  issueTemplateId:
+    name: issueTemplateId
+    in: path
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  attachmentId:
+    name: attachmentId
+    in: path
+    description: The unique attachment ID
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  commentId:
+    name: commentId
+    in: path
+    description: The unique comment ID
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  permissionId:
+    name: permissionId
+    in: path
+    description: The unique permission ID
+    required: true
+    type: string
+    x-example: WIPDMSecured--0ce29a5f-ea1d-4a3c-8f86-bd43c92d067c--quality_issues--30105860--role
+  issueId:
+    name: issueId
+    in: path
+    description: The unique identifier of the issue.
+    required: true
+    type: string
+    x-example: a5f49f04-59bb-477c-97e6-6833cb50bdac
+    x-format: uuid
+  filterByIssueId:
+    name: "filter[id]"
+    in: query
+    description: Filter issues by the unique issue ID. Separate multiple values with commas
+    required: false
+    type: string
+    x-example: "a5f49f04-59bb-477c-97e6-6833cb50bdac,a5f49f04-59bb-477c-97e6-6833cb50b123"
+  filterByIssueTypeId:
+    name: "filter[issueTypeId]"
+    in: query
+    description: Filter issues by the unique identifier of the type of the issue. Separate multiple values with commas
+    required: false
+    type: string
+    x-example: "a5f49f04-59bb-477c-97e6-6833cb50bdac,a5f49f04-59bb-477c-97e6-6833cb50b123"
+  filterByIssueSubtypeId:
+    name: "filter[issueSubtypeId]"
+    in: query
+    description: Filter issues by the unique identifier of the subtype of the issue. Separate multiple values with commas
+    required: false
+    type: string
+    x-example: "a5f49f04-59bb-477c-97e6-6833cb50bdac,a5f49f04-59bb-477c-97e6-6833cb50b123"
+  filterByStatus:
+    name: "filter[status]"
+    in: query
+    description: Filter issues by the unique identifier of the current status of the issue. Separate multiple values with commas
+    required: false
+    type: string
+    x-example: "a5f49f04-59bb-477c-97e6-6833cb50bdac,a5f49f04-59bb-477c-97e6-6833cb50b123"
+  filterByLinkedDocumentUrn:
+    name: "filter[linkedDocumentUrn]"
+    in: query
+    description: "Filter issues by linked file/document URN's. Separate multiple values with commas. To filter by maximum version, add \"@[version-number]\" after the urn. For example, to retrieve the issues of 2 file/document URN's, use filter[linkedDocumentUrn]=urn%3Aadsk.wipstg%3Adm.lineage%3A7RBfH69GTuuhXnzG5e4oew%2Curn%3Aadsk.wipstg%3Adm.lineage%3A-Rv5HsqqRwiGCM72YhmnOA@1"
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: multi
+  filterByValid:
+    name: "filter[valid]"
+    in: query
+    description: Only return valid issues (=no empty type/subtype)
+    required: false
+    type: boolean
+  filterByDueDate:
+    name: "filter[dueDate]"
+    in: query
+    description: "Filter issues by due date. For example, use filter[dueDate]=2018-05-09T00:00:00Z...2018-05-10T00:00:00Z (Date range), or filter[dueDate]=2018-05-09T00:00:00Z... (Greater-than or equal to), or filter[dueDate]=...2018-05-09T00:00:00Z (Less-than or equal to)"
+    required: false
+    type: string
+    format: date
+  filterByStartDate:
+    name: "filter[startDate]"
+    in: query
+    description: "Filter issues by start date. For example, use filter[startDate]=2018-05-09T00:00:00Z...2018-05-10T00:00:00Z (Date range), or filter[startDate]=2018-05-09T00:00:00Z... (Greater-than or equal to), or filter[startDate]=...2018-05-09T00:00:00Z (Less-than or equal to)"
+    required: false
+    type: string
+    format: date
+  filterByPublished:
+    name: "filter[published]"
+    in: query
+    description: Filter issues by published status (true/false)
+    required: false
+    type: boolean
+    x-ignore: true
+  filterByDeleted:
+    name: "filter[deleted]"
+    in: query
+    description: Show deleted issues (only admin). Default is false.
+    required: false
+    type: boolean
+    x-ignore: true
+  filterByCreatedAt:
+    name: "filter[createdAt]"
+    in: query
+    description: "Filter issues created at specified date and time. For example, use filter[createdAt]=2018-05-11T00:00:00%2B02:00...2018-05-12T00:00:00%2B02:00"
+    required: false
+    type: string
+    format: date-time
+  filterByCreatedBy:
+    name: "filter[createdBy]"
+    in: query
+    description: Filter issues by the unique identifier of the user who created the issue. Separate multiple values with commas
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: multi
+  filterByOpenedAt:
+    name: "filter[openedAt]"
+    in: query
+    description: "Filter issues opened at specified date and time. For example, use filter[openedAt]=2018-05-11T00:00:00%2B02:00...2018-05-12T00:00:00%2B02:00"
+    required: false
+    type: string
+    format: date-time
+  filterByOpenedBy:
+    name: "filter[openedBy]"
+    in: query
+    description: Filter issues by the unique identifier of the user who opened the issue. Separate multiple values with commas
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: multi
+  filterByUpdatedAt:
+    name: "filter[updatedAt]"
+    in: query
+    description: "Filter issues updated at specified date and time. For example, use filter[updatedAt]=2018-05-11T00:00:00%2B02:00...2018-05-12T00:00:00%2B02:00"
+    required: false
+    type: string
+    format: date-time
+  filterByUpdatedBy:
+    name: "filter[updatedBy]"
+    in: query
+    description: Filter issues by the unique identifier of the user who updated the issue. Separate multiple values with commas
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: multi
+  filterByAssignedTo:
+    name: "filter[assignedTo]"
+    in: query
+    description: Filter issues by the unique identifier of the current assignee of this issue. Separate multiple values with commas
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: multi
+  filterByRootCauseId:
+    name: "filter[rootCauseId]"
+    in: query
+    description: Filter issues by the unique identifier of the type of root cause for the issue. Separate multiple values with commas
+    required: false
+    type: array
+    items:
+      type: string
+      format: uuid
+    collectionFormat: multi
+  filterByLocationId:
+    name: "filter[locationId]"
+    in: query
+    description: Filter issues by the unique LBS (Location Breakdown Structure) identifier that relates to the issue. Separate multiple values with commas
+    required: false
+    type: array
+    items:
+      type: string
+      format: uuid
+    collectionFormat: multi
+  filterBySubLocation:
+    name: "filter[subLocationId]"
+    in: query
+    description: Filter issues by the unique LBS (Location Breakdown Structure) identifier that relates to the issue and retreives also all issues with sub locations. Separate multiple values with commas
+    required: false
+    type: array
+    items:
+      type: string
+      format: uuid
+    collectionFormat: multi
+  filterByClosedBy:
+    name: "filter[closedBy]"
+    in: query
+    description: Filter issues by the unique identifier of the user who closed the issue. Separate multiple values with commas
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: multi
+  filterByClosedAt:
+    name: "filter[closedAt]"
+    in: query
+    description: "Filter issues closed at specified date and time. For example, use filter[closedAt]=2018-05-11T00:00:00%2B02:00...2018-05-12T00:00:00%2B02:00"
+    required: false
+    type: string
+    format: date-time
+  filterByTitle:
+    name: "filter[title]"
+    in: query
+    description: "Filter issues by title. For example, use filter[title]=my title"
+    required: false
+    type: string
+  filterByDisplayId:
+    name: "filter[displayId]"
+    in: query
+    description: Filter issues by the chronological user-friendly identifier. Separate multiple values with commas
+    required: false
+    type: integer
+    minimum: 1
+  filterByAssignedToType:
+    name: "filter[assignedToType]"
+    in: query
+    description: Filter issues by the type of the current assignee of this issue. Separate multiple values with commas
+    required: false
+    type: string
+    minimum: 1
+  filterByCustomAttributes:
+    name: "filter[customAttributes]"
+    in: query
+    description: "Filter issues by the custom attributes. Each custom attribute filter should be defined by it's uuid. For example, filter[customAttributes][f227d940-ae9b-4722-9297-389f4411f010]=1,2,3. Separate multiple values with commas."
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: multi
+    minimum: 1
+  filterByViewableGuid:
+    name: "filter[viewableGuid]"
+    in: query
+    description: |
+      Filter issues that are related to one of the prahses in the filter.
+      Each prahas will be compossed from [file URN]/[sheet Guid] or [file URN]@[version]/[sheet Guid]
+      were as the version is given onlt issues that was created in the specific or privies version will be retuned
+      If the file URN is `URN1` and the guid is `123` the filter will be filter[viewableGuid]='URN1/123'.
+      more then one filter will look like - filter[viewableGuid]='URN1/123,URN2/456'
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: multi
+    minimum: 1
+    x-ignore: true
+  pageLimit:
+    name: limit
+    in: query
+    description: Return specified number of issues. Acceptable values are 1-100. Default value is 100
+    required: false
+    type: integer
+    default: 100
+    maximum: 100
+    minimum: 1
+  pageOffset:
+    name: offset
+    in: query
+    description: Return issues starting from the specified offset number. Default value is 0
+    required: false
+    type: integer
+    default: 0
+    minimum: 0
+  sortBy:
+    name: sort
+    in: query
+    description: "Sort issues by specified fields. Separate multiple values with commas. To sort in descending order add a - before the sort criteria. For example, sortBy=status,-displayId,-dueDate,customAttributes[5c07cbe2-256a-48f1-b35b-2e5e00914104]"
+    required: false
+    type: array
+    items:
+      type: string
+      enum:
+      - displayId
+      - title
+      - description
+      - status
+      - assignedTo
+      - assignedToType
+      - dueDate
+      - locationDetails
+      - published
+      - closedBy
+      - closedAt
+      - createdBy
+      - createdAt
+      - updatedAt
+      - issueSubType
+      - issueType
+      - customAttributes
+      - startDate
+      - rootCause
+    collectionFormat: multi
+  since:
+    name: since
+    in: query
+    description: limit query for issue ids to which i lost access
+    required: true
+    type: string
+    format: date-time
+    x-example: 2017-09-13T10:25:03.000Z
+  fields:
+    name: fields
+    in: query
+    description: "Return only specific fields in issue object. Separate multiple values with commas. Fields which will be returned in any case: id, title, status, issueTypeId"
+    required: false
+    type: array
+    items:
+      type: string
+      enum:
+      - id
+      - projectId
+      - displayId
+      - title
+      - description
+      - snapshotUrn
+      - issueTypeId
+      - issueSubtypeId
+      - status
+      - assignedTo
+      - assignedToType
+      - dueDate
+      - startDate
+      - locationId
+      - locationDetails
+      - linkedDocuments
+      - links
+      - rootCauseTitle
+      - rootCauseId
+      - permittedStatuses
+      - permittedAttributes
+      - permittedActions
+      - published
+      - commentCount
+      - attachmentCount
+      - openedBy
+      - openedAt
+      - closedBy
+      - closedAt
+      - createdBy
+      - createdAt
+      - updatedBy
+      - updatedAt
+      - customAttributes
+    collectionFormat: multi
+  issueAttributeDefinitionSearchLimit:
+    name: limit
+    in: query
+    description: "The number of custom attribute definitions to return in the response payload.  For example, ``limit=2``. Acceptable values: ``1-200``. Default value: ``200``."
+    required: false
+    type: integer
+    default: 200
+    maximum: 200
+    minimum: 1
+  issueAttributeDefinitionSearchOffset:
+    name: offset
+    in: query
+    description: The number of custom attribute definitions you want to begin retrieving results from.
+    required: false
+    type: integer
+    minimum: 0
+  issueAttributeMappingsSearchLimit:
+    name: limit
+    in: query
+    description: "The number of custom attribute mappings to return in the response payload.  For example, ``limit=2``. Acceptable values: ``1-200``. Default value: ``200``."
+    required: false
+    type: integer
+    maximum: 200
+    minimum: 1
+  issueAttributeMappingsSearchOffset:
+    name: offset
+    in: query
+    description: The number of custom attribute mappings you want to begin retrieving results from.
+    required: false
+    type: integer
+    minimum: 0
+  createdAtFilter:
+    name: "filter[createdAt]"
+    in: query
+    description: "Retrieves items that were created at the specified date and time, in the following format: YYYY-MM-DDThh:mm:ss.sz, or a date and time range in the following format: YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz. For more details, see `JSON API Filtering <http://jsonapi.org/format/#fetching-filtering>`_."
+    required: false
+    type: string
+    format: date-time
+    x-example: 2017-09-13T10:25:03.000Z...
+  updatedAtFilter:
+    name: "filter[updatedAt]"
+    in: query
+    description: "Retrieves items that were last updated at the specified date and time, in the following format: YYYY-MM-DDThh:mm:ss.sz, or a date and time range in the following format: YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz. For more details, see `JSON API Filtering <http://jsonapi.org/format/#fetching-filtering>`_."
+    required: false
+    type: string
+    format: date-time
+    x-example: 2017-09-13T10:25:03.000Z
+  deletedAtFilter:
+    name: "filter[deletedAt]"
+    in: query
+    description: |
+      Retrieves items that were deleted in the specified date and time range, in the following format: YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz.
+
+      To include non-deleted items in the response, add ``null`` to the filter:  ``filter[deletedAt]=null,YYYY-MM-DDThh:mm:ss.sz...YYYY-MM-DDThh:mm:ss.sz``.
+
+      For more details, see `JSON API Filtering <http://jsonapi.org/format/#fetching-filtering>`_.
+    required: false
+    type: string
+    format: date-time
+    x-example: '...2017-09-13T10:25:03.000Z'
+  issueAttributeDefinitionDataTypeFilter:
+    name: "filter[dataType]"
+    in: query
+    description: "Retrieves issue custom attribute definitions with the specified data type. Possible values: ``list``, ``text``, ``paragraph``, ``numeric``. For example, ``filter[dataType]=text,numeric``."
+    required: false
+    type: string
+    x-example: text
+    enum:
+    - list
+    - text
+    - paragraph
+    - numeric
+  issueAttributeMappingsAttributeDefinitionIdFilter:
+    name: "filter[attributeDefinitionId]"
+    in: query
+    description: "Retrieves issue custom attribute mappings associated with the specified issue custom attribute definitions. Separate multiple values with commas. For example: ``filter[attributeDefinitionId]=18ee5858-cbf1-451a-a525-7c6ff8156775``."
+    required: false
+    type: string
+    x-example: 18ee5858-cbf1-451a-a525-7c6ff8156775
+  issueAttributeMappingsMappedItemIdFilter:
+    name: "filter[mappedItemId]"
+    in: query
+    description: "Retrieves issue custom attribute mappings associated with the specified items (project, type, or subtype). Separate multiple values with commas. For example: ``filter[mappedItemId]=18ee5858-cbf1-451a-a525-7c6ff8156775``."
+    required: false
+    type: string
+    x-example: 18ee5858-cbf1-451a-a525-7c6ff81567aa
+  issueAttributeMappingsIsRequiredFilter:
+    name: "filter[isRequired]"
+    in: query
+    description: "Retrieves issue custom attribute mappings associated with custom attributes that are either required or not required. Possible values: ``true``, ``false``. For example: ``filter[isRequired]=true``."
+    required: false
+    type: string
+    x-example: "true"
+responses:
+  issues:
+    description: Returns all issues in combination with pagination details
+    schema:
+      $ref: '#/definitions/IssuesDefinition'
+  issue:
+    description: Returns a single issue
+    schema:
+      $ref: '#/definitions/GetIssueDefinition'
+  badInput:
+    description: The request could not be understood by the server due to malformed syntax or missing request headers. The client SHOULD NOT repeat the request without modifications. The response body may give an indication of what is wrong with the request
+    schema:
+      $ref: '#/definitions/ErrorResponseDefinition'
+  unauthorized:
+    description: The supplied Authorization header was not valid. Verify Authentication and try again
+    schema:
+      $ref: '#/definitions/ErrorResponseDefinition'
+  forbidden:
+    description: The request was successfully validated but permission is not granted
+    schema:
+      $ref: '#/definitions/ErrorResponseDefinition'
+  notFound:
+    description: The specified resource was not found
+    schema:
+      $ref: '#/definitions/ErrorResponseDefinition'
+  conflict:
+    description: The request contained a data conflict
+    schema:
+      $ref: '#/definitions/ErrorResponseDefinition'
